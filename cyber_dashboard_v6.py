@@ -34,49 +34,15 @@ hide_streamlit_links = """
 st.markdown(hide_streamlit_links, unsafe_allow_html=True)
 
 
-# --- Fully hide Streamlit branding: header, menu, footer, and "Manage app" link ---
-hide_streamlit_style = """
+
+#remove top padding
+st.set_page_config(layout="wide")
+st.markdown("""
     <style>
-    /* Hide the main menu and footer */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-
-    /* Hide bottom-right floating "View app" / "Manage app" / "Made with Streamlit" link */
-    [data-testid="stActionButton"] {display: none !important;}
-    [data-testid="stAppViewContainer"] > div:first-child {padding-bottom: 0rem;}
-    [data-testid="stStatusWidget"] {display: none !important;}
-    .stAppDeployButton {display: none !important;}
-
-    /* Hide Streamlit Cloud floating bar (deployed app bar) */
-    [data-testid="stDecoration"] {display: none !important;}
-    div[data-testid="stToolbar"] {display: none !important;}
-    div[data-testid="stDecorationContainer"] {display: none !important;}
+        div.block-container { padding-top: 2rem !important; }
+        section[data-testid="stTabs"] { margin-top: 30px !important; }
     </style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-#hide_streamlit_ui
-hide_streamlit_ui = """
-    <style>
-    /* Hide Streamlit header, menu, and footer */
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* Hide "Manage app" or "View app" button (Streamlit Cloud) */
-    button[data-testid="manage-app-button"] {
-        display: none !important;
-    }
-    /* Also hide any deploy or cloud status buttons */
-    .stAppDeployButton, [data-testid="stActionButton"], [data-testid="stStatusWidget"], 
-    [data-testid="stDecoration"], [data-testid="stToolbar"], [data-testid="stDecorationContainer"] {
-        display: none !important;
-    }
-    </style>
-"""
-st.markdown(hide_streamlit_ui, unsafe_allow_html=True)
-
+""", unsafe_allow_html=True)
 
 # -----------------------------------------------
 # PAGE CONFIG & STYLES
