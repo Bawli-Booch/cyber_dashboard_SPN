@@ -1509,7 +1509,7 @@ to_excel.seek(0)
 # Center-aligned button using columns
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
-    st.download_button(
+    st.button(
         label="⬇️ Download Full Data as Excel",
         data=to_excel,
         file_name="cyber_dashboard_data.xlsx",
@@ -1521,7 +1521,7 @@ with c1:
 # Create 3 equal columns and place the button in the center one
 with c3:
     # The actual button
-    if st.download_button("Fetch / Refresh Data"):
+    if st.button("Fetch / Refresh Data"):
         st.session_state.sheet_url = sheet_input.strip()
         st.cache_data.clear()
         st.rerun()
