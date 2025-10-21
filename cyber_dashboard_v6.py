@@ -9,6 +9,31 @@ from bs4 import BeautifulSoup
 
 #remove streamlit header and footer
 
+hide_streamlit_links = """
+    <style>
+    /* Hide default Streamlit UI elements */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+
+    /* Hide Streamlit Cloud "Manage app" / "View app" floating button */
+    div[data-testid="stDecoration"] {display: none !important;}
+    div[data-testid="stStatusWidget"] {display: none !important;}
+    div[data-testid="stActionButton"] {display: none !important;}
+    div[class*="_link_"] {display: none !important;} /* ← handles <div class="_link_gzau3_10"> */
+    div[class*="stDecoration"] {display: none !important;}
+    div[title="Manage app"] {display: none !important;}
+    button[data-testid="manage-app-button"] {display: none !important;}
+    .stAppDeployButton {display: none !important;}
+
+    /* Optional: remove small right-bottom space left by Streamlit Cloud decoration container */
+    div[data-testid="stDecorationContainer"] {display: none !important;}
+    div[data-testid="stToolbar"] {display: none !important;}
+    </style>
+"""
+st.markdown(hide_streamlit_links, unsafe_allow_html=True)
+
+
 # --- Fully hide Streamlit branding: header, menu, footer, and "Manage app" link ---
 hide_streamlit_style = """
     <style>
