@@ -8,7 +8,7 @@ import uuid
 from bs4 import BeautifulSoup
 
 #remove streamlit header and footer
-import streamlit as st
+
 
 # --- Hide all Streamlit UI and Cloud branding ---
 hide_streamlit_branding = """
