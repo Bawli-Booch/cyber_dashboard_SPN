@@ -1509,7 +1509,7 @@ to_excel.seek(0)
 # Center-aligned button using columns
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
-    st.button(
+    st.download_button(
         label="⬇️ Download Full Data as Excel",
         data=to_excel,
         file_name="cyber_dashboard_data.xlsx",
