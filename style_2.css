@@ -1,0 +1,554 @@
+/* ===========================================
+   CYBER CELL SHAHJAHANPUR DASHBOARD THEME
+   =========================================== */
+
+/* --- GLOBAL STYLES --- */
+body {
+  font-family: 'Inter', 'Noto Sans Devanagari', sans-serif !important;
+  background-color: #f7f9fc !important;
+  color: #0b2849 !important;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  color: #0b67b2 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+/* Streamlit container spacing */
+[data-testid="stVerticalBlock"] {
+  padding: 0 1.2rem !important;
+}
+
+/* --- HEADER & FOOTER --- */
+header, footer {
+  text-align: center !important;
+}
+footer::before {
+  content: "© 2025 Cyber Cell Shahjahanpur | Dashboard v1.0";
+  display: block;
+  color: #0b67b2;
+  font-size: 13px;
+  padding-top: 8px;
+  font-weight: 500;
+}
+
+/* --- KPI Cards --- */
+[data-testid="metric-container"] {
+  background: linear-gradient(135deg, #ffffff, #f3f9ff);
+  border-radius: 14px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(11,103,178,0.1);
+  border: 1px solid #dce6f5;
+  transition: all 0.25s ease;
+}
+[data-testid="metric-container"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(11,103,178,0.18);
+}
+
+/* --- Scrollbar styling (global) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(11,103,178,0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- Horizontal Circle Button Row --- */
+.circle-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 12px 0;
+  scroll-behavior: smooth;
+}
+.circle-row::-webkit-scrollbar {
+  height: 6px;
+}
+.circle-row::-webkit-scrollbar-thumb {
+  background: rgba(11,103,178,0.4);
+  border-radius: 10px;
+}
+.circle-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- Circle Buttons (Modern UI) --- */
+div[data-testid="stButton"] > button {
+  background: rgba(255,255,255,0.9) !important;
+  backdrop-filter: blur(6px);
+  color: #0b67b2 !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  text-align: left !important;
+  letter-spacing: 0.2px;
+  border: 1.5px solid rgba(11,103,178,0.25) !important;
+  border-radius: 14px !important;
+  padding: 10px 22px !important;
+  box-shadow: 0 2px 6px rgba(11,103,178,0.1);
+  transition: all 0.25s ease-in-out;
+  width: 100%;
+  text-align: center !important;
+  align-items: center;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;       /* Prevent text breaking mid-word */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;   /* Add '...' if text is too long */
+  padding: 0.1rem 0.1rem !important;   /* Balanced padding */
+  height: 2.4rem !important;            /* Consistent height */
+  min-width: 9rem !important;           /* Keeps short buttons uniform */
+  border-radius: 6px !important;        /* Soft rounded corners */
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  margin-top: 0.1rem !important;
+  margin-bottom: 0.1rem !important;
+  margin: 0 !important; 
+  margin-right: -0.25rem !important;
+  
+
+}
+
+/* Hover effect */
+div[data-testid="stButton"] > button:hover {
+  background: linear-gradient(135deg, #0b67b2, #1aa3c1) !important;
+  color: #fff !important;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(11,103,178,0.3);
+}
+
+/* Active / Expanded (glow effect) */
+div[data-testid="stButton"] > button:has(span:contains('🟦')) {
+  background: linear-gradient(145deg, #0b67b2, #1aa3c1) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 0 15px 3px rgba(11,103,178,0.4);
+  animation: pulseBlue 1.8s infinite ease-in-out;
+  transform: scale(1.06);
+}
+
+/* Pulse animation for active button */
+@keyframes pulseBlue {
+  0% { box-shadow: 0 0 10px rgba(11,103,178,0.4); }
+  50% { box-shadow: 0 0 20px rgba(26,163,193,0.55); }
+  100% { box-shadow: 0 0 10px rgba(11,103,178,0.4); }
+}
+
+/* --- Expanded Thana Section Banner --- */
+.expanded-banner {
+  background: linear-gradient(90deg, #0b67b2, #1aa3c1);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(11,103,178,0.25);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.expanded-banner::before {
+  content: "📊";
+  font-size: 18px;
+}
+
+/* --- Accordion container --- */
+div[data-testid="stContainer"][border="true"] {
+  background: #ffffff;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 10px rgba(11,103,178,0.1);
+  padding: 15px !important;
+  margin-bottom: 12px !important;
+  transition: all 0.25s ease-in-out;
+}
+div[data-testid="stContainer"][border="true"]:hover {
+  box-shadow: 0 3px 14px rgba(11,103,178,0.18);
+  transform: scale(1.01);
+}
+
+/* --- Responsive text tweaks --- */
+@media (max-width: 768px) {
+  div[data-testid="stButton"] > button {
+    font-size: 14px !important;
+    padding: 8px 16px !important;
+  }
+  h2 { font-size: 22px !important; }
+  h3 { font-size: 18px !important; }
+}
+
+/* --- Table Styling --- */
+table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+thead tr th {
+  background: #0b67b2 !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+tbody tr:nth-child(even) {
+  background: #f2f7fc;
+}
+tbody tr:hover {
+  background: #e7f3ff !important;
+  transition: all 0.2s ease-in-out;
+}
+
+/* --- Plotly chart tweaks --- */
+.js-plotly-plot .plotly .main-svg {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ===========================================
+   ✨ TAB HEADINGS ENHANCEMENT
+   =========================================== */
+
+/* Increase spacing around the tab bar */
+
+/* Tab container styling */
+[data-testid="stTabs"] > div:first-child {
+  border-bottom: 2px solid #e1eaf5 !important;
+  padding-bottom: 1px !important;
+}
+/* important*/
+/* Individual tab labels */
+[data-testid="stTabs"] button {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  color: #0b67b2 !important;
+  padding: 1px 1px !important;
+  border-radius: 8px !important;
+  width: 100% !important;
+  transition: all 0.25s ease-in-out;
+}
+
+/* Hover effect */
+[data-testid="stTabs"] button:hover {
+  background: linear-gradient(135deg, #81d9ed, #81d9ed) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+
+/* Active tab (selected) */
+[data-testid="stTabs"] button[aria-selected="true"] {
+  background: linear-gradient(135deg, #81d9ed, #81d9ed) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(11,103,178,0.25);
+  border: none !important;
+}
+
+
+/* ===========================================
+   🔍 FILTER SECTION - MODERN CARD STYLE
+   =========================================== */
+
+.filter-header {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b67b2;
+  margin-top: 8px;
+  margin-bottom: 5px;
+  letter-spacing: 0.3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.filter-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b6a88;
+  margin-top: 2px;
+}
+
+/* Container that wraps all filter fields */
+.filter-container {
+  background: linear-gradient(135deg, #ffffff, #f5faff);
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(11,103,178,0.1);
+  padding: 18px 20px;
+  margin: 8px 0 22px 0;
+  transition: all 0.3s ease-in-out;
+}
+.filter-container:hover {
+  box-shadow: 0 5px 18px rgba(11,103,178,0.18);
+}
+
+/* Label Styling */
+label[data-testid="stFormLabel"] {
+  color: #0b67b2 !important;
+  font-weight: 600 !important;
+  font-size: 5px !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.2px;
+}
+
+/* Inputs, Selects, and Date Pickers */
+div[data-baseweb="select"] > div,
+[data-baseweb="input"] input,
+div[data-baseweb="datepicker"] {
+  border-radius: 10px !important;
+  border: 1.5px solid #d2dff0 !important;
+  background: #fff !important;
+  color: #0b2849 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 4px rgba(11,103,178,0.05);
+  transition: all 0.25s ease;
+}
+
+/* Hover & Focus Effects */
+div[data-baseweb="select"]:hover > div,
+[data-baseweb="input"] input:focus,
+div[data-baseweb="datepicker"]:hover {
+  border-color: #0b67b2 !important;
+  box-shadow: 0 0 6px rgba(11,103,178,0.15);
+}
+
+/* Placeholder text color */
+[data-baseweb="input"] input::placeholder {
+  color: #7b8fa1 !important;
+}
+
+/* Column responsiveness */
+@media (max-width: 900px) {
+  [data-testid="stHorizontalBlock"] > div {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+  .filter-container {
+    padding: 14px 16px;
+  }
+  .filter-header {
+    font-size: 18px;
+  }
+  .filter-subtitle {
+    font-size: 13.5px;
+  }
+}
+
+/* Reset Button (if used later) */
+.filter-reset-btn {
+  background: linear-gradient(135deg, #0b67b2, #1aa3c1);
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.filter-reset-btn:hover {
+  background: linear-gradient(135deg, #094f8a, #14879f);
+  transform: scale(1.05);
+}
+
+
+/* ===========================================
+   🎚️ FILTER LABELS - KPI, CIRCLE, THANA, DATE
+   =========================================== */
+
+/* Label text styling */
+label[data-testid="stFormLabel"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 15.5px !important;
+  font-weight: 700 !important;
+  color: #0b67b2 !important;
+  letter-spacing: 0.2px;
+  margin-bottom: 6px !important;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 1px 3px rgba(11,103,178,0.08);
+}
+
+/* Label hover effect */
+label[data-testid="stFormLabel"]:hover {
+  background: linear-gradient(135deg, #f0f8ff, #e6f4ff);
+  box-shadow: 0 2px 6px rgba(11,103,178,0.12);
+  transform: translateY(-2px);
+}
+
+/* Input & select fields */
+div[data-baseweb="select"] > div,
+[data-baseweb="input"] input,
+div[data-baseweb="datepicker"] {
+  border-radius: 10px !important;
+  border: 1.5px solid #d3e2f4 !important;
+  background: #fff !important;
+  color: #0b2849 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 4px rgba(11,103,178,0.05);
+  transition: all 0.25s ease;
+}
+
+/* Hover & focus glow */
+div[data-baseweb="select"]:hover > div,
+[data-baseweb="input"] input:focus,
+div[data-baseweb="datepicker"]:hover {
+  border-color: #0b67b2 !important;
+  box-shadow: 0 0 6px rgba(11,103,178,0.15);
+}
+
+/* Animated underline accent on focus */
+[data-baseweb="select"]:focus-within,
+[data-baseweb="input"]:focus-within,
+[data-baseweb="datepicker"]:focus-within {
+  position: relative;
+}
+[data-baseweb="select"]:focus-within::after,
+[data-baseweb="input"]:focus-within::after,
+[data-baseweb="datepicker"]:focus-within::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: 2px;
+  background: linear-gradient(90deg, #0b67b2, #1aa3c1);
+  border-radius: 2px;
+  animation: growLine 0.3s ease-out forwards;
+}
+@keyframes growLine {
+  from { width: 0; opacity: 0; }
+  to { width: calc(100% - 20px); opacity: 1; }
+}
+
+/* Icons in labels */
+label[data-testid="stFormLabel"]::before {
+  font-size: 17px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  label[data-testid="stFormLabel"] {
+    font-size: 14.5px !important;
+    padding: 5px 8px;
+  }
+}
+
+/* ===========================================
+   🎨 FILTER LABEL STYLING (Custom Headings)
+   =========================================== */
+
+.filter-label {
+  background: linear-gradient(135deg, #f4faff, #e9f2fc);
+  color: #0b67b2;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 3px 2px;
+  border-radius: 1px;
+  box-shadow: 0 2px 6px rgba(11,103,178,0.08);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 5px solid #0b67b2;
+  transition: all 0.25s ease-in-out;
+}
+
+.filter-label:hover {
+  background: linear-gradient(135deg, #0b67b2, #1aa3c1);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(11,103,178,0.2);
+  border-left: 5px solid #ffffff;
+}
+
+/* Dropdown inputs below the labels */
+div[data-baseweb="select"] > div,
+[data-baseweb="input"] input,
+div[data-baseweb="datepicker"] {
+  border-radius: 10px !important;
+  border: 1.5px solid #c8d9ee !important;
+  background: #ffffff !important;
+  color: #0b2849 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 4px rgba(11,103,178,0.05);
+  transition: all 0.25s ease;
+}
+
+/* Hover/focus glow for dropdowns */
+div[data-baseweb="select"]:hover > div,
+[data-baseweb="input"] input:focus,
+div[data-baseweb="datepicker"]:hover {
+  border-color: #0b67b2 !important;
+  box-shadow: 0 0 6px rgba(11,103,178,0.15);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .filter-label {
+    font-size: 14.5px;
+    padding: 5px 10px;
+  }
+}
+
+/* ============================================================
+   KPI Group Buttons Styling
+   Handles wrapping, alignment, hover, and active states
+   ============================================================ */
+
+/* Base style for KPI buttons */
+div[data-testid="column"] > div > button[kind="secondary"] {
+  white-space: normal !important;          /* allow text to wrap */
+  word-wrap: break-word !important;        /* break long words */
+  overflow-wrap: break-word !important;    /* ensure long words break */
+  text-align: center !important;
+  line-height: 1.3em !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+
+  height: auto !important;                 /* expand with content */
+  min-height: 45px !important;             /* minimum consistent height */
+  width: 100% !important;                  /* full column width */
+
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #cccccc !important;
+  color: #0b67b2 !important;
+  background-color: #f8f9fa !important;
+
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+}
+
+/* Hover effect */
+div[data-testid="column"] > div > button[kind="secondary"]:hover {
+  background-color: #0b67b2 !important;
+  color: #ffffff !important;
+  border-color: #0b67b2 !important;
+}
+
+/* Active (selected) button */
+div[data-testid="column"] > div > button[kind="secondary"].active-button {
+  background-color: #0b67b2 !important;
+  color: #ffffff !important;
+  border-color: #0b67b2 !important;
+  font-weight: 600 !important;
+}
+
+/* Optional: add subtle spacing between columns */
+div[data-testid="column"] {
+  padding-right: 4px !important;
+  padding-left: 4px !important;
+}
+
