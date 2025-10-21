@@ -1521,7 +1521,7 @@ with c1:
 # Create 3 equal columns and place the button in the center one
 with c3:
     # The actual button
-    if st.button("Fetch / Refresh Data"):
+    if st.download_button("Fetch / Refresh Data"):
         st.session_state.sheet_url = sheet_input.strip()
         st.cache_data.clear()
         st.rerun()
