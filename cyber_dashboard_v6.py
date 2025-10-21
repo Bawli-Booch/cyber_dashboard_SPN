@@ -7,6 +7,24 @@ from io import BytesIO
 import uuid
 from bs4 import BeautifulSoup
 
+#remove streamlit header and footer
+# --- Hide Streamlit branding, hamburger menu, and footer ---
+hide_streamlit_style = """
+    <style>
+    /* Hide the top-right hamburger menu */
+    #MainMenu {visibility: hidden;}
+    
+    /* Hide the "Made with Streamlit" footer */
+    footer {visibility: hidden;}
+    
+    /* Hide the "Deploy" and "Manage App" button (bottom right) */
+    .stAppDeployButton {display: none;}
+    
+    /* Optional: hide the header entirely */
+    header {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 # -----------------------------------------------
