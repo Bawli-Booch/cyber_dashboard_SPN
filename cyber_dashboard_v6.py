@@ -1496,7 +1496,7 @@ with tab7:  # or use st.tab("💰 Money") if you use st.tabs() pattern
 # -----------------------------------------------
 import io
 st.markdown("---")
-st.markdown("#### 📁 Download Full Google Sheet Data")
+st.markdown("##### 📁 Download Full Google Sheet Data")
 
 # Assume your full dataframe is df_raw or df
 data_to_download = df_raw.copy() if "df_raw" in locals() else df.copy()
