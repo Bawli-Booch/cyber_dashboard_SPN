@@ -1494,7 +1494,7 @@ with tab7:  # or use st.tab("💰 Money") if you use st.tabs() pattern
 # -----------------------------------------------
 # 📊 GOOGLE SHEET DATA DOWNLOAD SECTION
 # -----------------------------------------------
-
+import io
 st.markdown("---")
 st.markdown("#### 📁 Download Full Google Sheet Data")
 
