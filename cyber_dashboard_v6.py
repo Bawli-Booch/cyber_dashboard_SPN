@@ -1492,16 +1492,34 @@ with tab7:  # or use st.tab("💰 Money") if you use st.tabs() pattern
         display_table_with_download(daily_totals, "date_wise_money", "Date wise money KPI Data")
 
 # -----------------------------------------------
-# GOOGLE SHEET LINK AT BOTTOM
+# 📊 GOOGLE SHEET DATA DOWNLOAD SECTION
 # -----------------------------------------------
-st.markdown("---")
 
-st.markdown("#### Google Sheet Link")
-sheet_input = sheet_url
+st.markdown("---")
+st.markdown("#### 📁 Download Full Google Sheet Data")
+
+# Assume your full dataframe is df_raw or df
+data_to_download = df_raw.copy() if "df_raw" in locals() else df.copy()
+
+# Convert to Excel in memory
+to_excel = io.BytesIO()
+data_to_download.to_excel(to_excel, index=False, sheet_name="Full_Data")
+to_excel.seek(0)
+
+# Center-aligned button using columns
+c1, c2, c3 = st.columns([1, 1, 1])
+with c1:
+    st.download_button(
+        label="⬇️ Download Full Data as Excel",
+        data=to_excel,
+        file_name="cyber_dashboard_data.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
+
 # --- Center-aligned download button ---
 # Create 3 equal columns and place the button in the center one
-c1, c2, c3 = st.columns([1, 1, 1])
-with c2:
+with c3:
     # The actual button
     if st.button("Fetch / Refresh Data"):
         st.session_state.sheet_url = sheet_input.strip()
