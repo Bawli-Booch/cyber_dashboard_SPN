@@ -31,6 +31,27 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+#hide_streamlit_ui
+hide_streamlit_ui = """
+    <style>
+    /* Hide Streamlit header, menu, and footer */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+
+    /* Hide "Manage app" or "View app" button (Streamlit Cloud) */
+    button[data-testid="manage-app-button"] {
+        display: none !important;
+    }
+    /* Also hide any deploy or cloud status buttons */
+    .stAppDeployButton, [data-testid="stActionButton"], [data-testid="stStatusWidget"], 
+    [data-testid="stDecoration"], [data-testid="stToolbar"], [data-testid="stDecorationContainer"] {
+        display: none !important;
+    }
+    </style>
+"""
+st.markdown(hide_streamlit_ui, unsafe_allow_html=True)
+
 
 # -----------------------------------------------
 # PAGE CONFIG & STYLES
