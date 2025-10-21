@@ -39,8 +39,8 @@ st.markdown(hide_streamlit_links, unsafe_allow_html=True)
 st.set_page_config(layout="wide")
 st.markdown("""
     <style>
-        div.block-container { padding-top: -1rem !important; }
-        section[data-testid="stTabs"] { margin-top: -30px !important; }
+        div.block-container { padding-top: 0rem !important; }
+        section[data-testid="stTabs"] { margin-top: 0px !important; }
     </style>
 """, unsafe_allow_html=True)
 
