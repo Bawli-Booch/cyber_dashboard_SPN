@@ -3,11 +3,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import io
+import numpy as np
 import requests, re, urllib.parse, datetime
 from io import BytesIO
 import uuid
 from bs4 import BeautifulSoup
-
+from datetime import date
 #remove streamlit header and footer
 
 
@@ -1342,7 +1343,7 @@ with tab6:
     # 2️⃣ ALL THANAS
     # ======================================
     with sub2:
-      
+        
         if thana_col not in df.columns:
             st.warning("No Thana column found.")
         else:
@@ -1374,14 +1375,15 @@ with tab6:
             # Trend chart data (common)
             # =====================================================
             agg_dict = {}
-            for cols in (
-                sum(KPI_GROUPS_NO_MONEY.values(), [])
-                if selected_group == "All"
-                else KPI_GROUPS_NO_MONEY[selected_group]
-            ):
-                col = f"{cols}_num" if f"{cols}_num" in df.columns else cols
-                if col in df.columns:
-                    agg_dict[col] = "sum"
+            if selected_group == "All":
+                for cols in KPI_GROUPS_NO_MONEY.values():
+                    for c in cols:
+                        if c + "_num" in df.columns:
+                            agg_dict[c + "_num"] = "sum"
+            else:
+                for c in KPI_GROUPS_NO_MONEY[selected_group]:
+                    if c + "_num" in df.columns:
+                        agg_dict[c + "_num"] = "sum"
 
             df_sum = df.groupby([date_col, thana_col]).agg(agg_dict).reset_index()
             df_sum["Total"] = df_sum.drop(columns=[date_col, thana_col]).sum(axis=1)
@@ -1398,51 +1400,99 @@ with tab6:
             st.plotly_chart(fig, use_container_width=True)
 
             # =====================================================
-            # SEPARATE CALLS FOR "All" vs "Selected"
+            # Pivot Table Display (All + Specific)
             # =====================================================
+            st.markdown(f"### 📊 Thana-wise Summary – {selected_group}")
+
             if selected_group == "All":
-                st.subheader("📊 All KPI Groups Summary in available in pivot tab")
+                # ------------------------------------------------
+                # ✅ COMBINED VIEW: One column per KPI group
+                # ------------------------------------------------
+                group_sums = {}
+                for grp, cols in KPI_GROUPS_NO_MONEY.items():
+                    grp_cols = [c + "_num" for c in cols if c + "_num" in df.columns]
+                    if grp_cols:
+                        group_sums[grp] = df.groupby(thana_col)[grp_cols].sum().sum(axis=1)
+
+                pivot = pd.DataFrame(group_sums)
 
             else:
-                # ✅ Specific KPI group
+                # ------------------------------------------------
+                # ✅ SPECIFIC KPI GROUP
+                # ------------------------------------------------
                 kpi_cols = [
                     c + "_num" for c in KPI_GROUPS_NO_MONEY[selected_group]
                     if c + "_num" in df.columns
                 ]
                 pivot = df.groupby(thana_col)[kpi_cols].sum()
 
-                pivot["Sum"] = pivot.sum(axis=1)
-                total_row = pivot.sum(numeric_only=True)
-                total_row.name = "TOTAL"
-                pivot = pd.concat([pivot, pd.DataFrame(total_row).T])
-                pivot = pivot.reset_index(names=[thana_col])
+            # ➕ Add Total column & TOTAL row
+            pivot["Total"] = pivot.select_dtypes(include=["number"]).sum(axis=1)
+            total_row = pivot.select_dtypes(include=["number"]).sum(numeric_only=True)
+            total_row.name = "TOTAL"
+            pivot = pd.concat([pivot, pd.DataFrame(total_row).T])
 
-                pivot.columns = [
-                    str(col).replace("_num", "") if isinstance(col, (str, bytes)) else str(col)
-                    for col in pivot.columns
-                ]
+            # 🧭 Ensure Thana column is visible
+            if thana_col not in pivot.columns:
+                pivot.insert(0, thana_col, pivot.index)
+            pivot.reset_index(drop=True, inplace=True)
 
-                if thana_col in pivot.columns:
-                    pivot = pivot[[thana_col] + [c for c in pivot.columns if c != thana_col]]
+            # 🧹 Clean names
+            pivot.columns = [
+                str(col).replace("_num", "") if isinstance(col, (str, bytes)) else str(col)
+                for col in pivot.columns
+            ]
 
-                # 🧾 Display & download
-                display_table_with_download(
-                    dataframe=pivot,
-                    filename=f"Thana_{selected_group}_KPIs",
-                    title=f"📊 Thana-wise Summary – {selected_group}",
-                    height=450
+            # 🧹 Remove duplicates (safety)
+            pivot = pivot.loc[:, ~pivot.columns.duplicated()]
+
+            # 🔢 Format numeric columns safely
+            for col in pivot.select_dtypes(include=["number"]).columns:
+                pivot[col] = pivot[col].apply(
+                    lambda x: f"{x:,.0f}" if pd.notna(x) and np.isfinite(x) else x
                 )
 
+            # ======================================
+            # ✅ Display Interactive Sortable Table
+            # ======================================
+            st.dataframe(
+                pivot,
+                use_container_width=True,
+                hide_index=True,
+            )
 
+            # ======================================
+            # ✅ Excel Download Button
+            # ======================================
+            st.markdown("---")
+            c1, c2, c3 = st.columns([0.5, 1, 1])
+                
+            
+            with c2:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                    pivot.to_excel(writer, index=False, sheet_name="Thana_Summary")
+                excel_data = output.getvalue()
+
+                st.download_button(
+                    label="📥 Download Excel",
+                    data=excel_data,
+                    file_name=f"Thana_{selected_group}_Summary.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+            
     # ======================================
     # 3️⃣ ALL CIRCLES
     # ======================================
     with sub3:
-    
+
         if circle_col not in df.columns:
             st.warning("No Circle column found.")
         else:
-            # KPI group buttons
+            # ======================================
+            # KPI Group Buttons
+            # ======================================
             kpi_groups = list(KPI_GROUPS_NO_MONEY.keys())
             group_cols = st.columns(len(kpi_groups) + 1)
             selected_group = st.session_state.get("ts_circle_kpi_group", "All")
@@ -1456,7 +1506,9 @@ with tab6:
                     selected_group = grp
                     st.session_state.ts_circle_kpi_group = grp
 
-            # Aggregate data
+            # ======================================
+            # Aggregate Data
+            # ======================================
             agg_dict = {}
             if selected_group == "All":
                 for cols in KPI_GROUPS_NO_MONEY.values():
@@ -1471,20 +1523,124 @@ with tab6:
             df_sum = df.groupby([date_col, circle_col]).agg(agg_dict).reset_index()
             df_sum["Total"] = df_sum.drop(columns=[date_col, circle_col]).sum(axis=1)
 
-            fig = px.line(df_sum, x=date_col, y="Total", color=circle_col,
-                          markers=True, title=f"All Circles — {selected_group} Trend Over Time")
+            # ======================================
+            # Plot Trend
+            # ======================================
+            fig = px.line(
+                df_sum,
+                x=date_col,
+                y="Total",
+                color=circle_col,
+                markers=True,
+                title=f"All Circles — {selected_group} Trend Over Time"
+            )
             fig.update_layout(height=500)
             st.plotly_chart(fig, use_container_width=True)
 
-            display_table_with_download(df_sum, "overall_circle_wise_time_series", "Daily overall circle-wise Data")
+            # ======================================
+            # Pivot Table Display (All + Specific)
+            # ======================================
+            st.markdown(f"### 📊 Circle-wise Summary – {selected_group}")
+
+            if selected_group == "All":
+                # ------------------------------------------------
+                # ✅ COMBINED VIEW: one column per KPI group
+                # ------------------------------------------------
+                group_sums = {}
+                for grp, cols in KPI_GROUPS_NO_MONEY.items():
+                    grp_cols = [c + "_num" for c in cols if c + "_num" in df.columns]
+                    if grp_cols:
+                        group_sums[grp] = df.groupby(circle_col)[grp_cols].sum().sum(axis=1)
+
+                pivot = pd.DataFrame(group_sums)
+
+            else:
+                # ------------------------------------------------
+                # ✅ SPECIFIC KPI GROUP
+                # ------------------------------------------------
+                kpi_cols = [
+                    c + "_num"
+                    for c in KPI_GROUPS_NO_MONEY[selected_group]
+                    if c + "_num" in df.columns
+                ]
+                pivot = df.groupby(circle_col)[kpi_cols].sum()
+
+            # ➕ Add Total column & TOTAL row
+            pivot["Total"] = pivot.select_dtypes(include=["number"]).sum(axis=1)
+            total_row = pivot.select_dtypes(include=["number"]).sum(numeric_only=True)
+            total_row.name = "TOTAL"
+            pivot = pd.concat([pivot, pd.DataFrame(total_row).T])
+
+            # 🧭 Ensure Circle column is visible
+            if circle_col not in pivot.columns:
+                pivot.insert(0, circle_col, pivot.index)
+            pivot.reset_index(drop=True, inplace=True)
+
+            # 🧹 Clean names
+            pivot.columns = [
+                str(col).replace("_num", "") if isinstance(col, (str, bytes)) else str(col)
+                for col in pivot.columns
+            ]
+
+            # 🧹 Remove duplicates (if any)
+            pivot = pivot.loc[:, ~pivot.columns.duplicated()]
+
+            # 🔢 Format numeric columns
+            for col in pivot.select_dtypes(include=["number"]).columns:
+                pivot[col] = pivot[col].apply(
+                    lambda x: f"{x:,.0f}" if pd.notna(x) and np.isfinite(x) else x
+                )
+
+            # ✅ Display the final table
+            #st.table(pivot)
+            # ======================================
+            # ✅ Display Interactive Sortable Table
+            # ======================================
+            st.dataframe(
+                pivot,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            # --- Add manual download buttons ---
+            st.markdown("---")
+            c1, c2, c3 = st.columns([0.5, 1, 1])
+                
+            with c3:
+                csv_buffer = io.StringIO()
+                pivot.to_csv(csv_buffer, index=True)
+                    
+                st.download_button(
+                    label="⬇️ Download CSV",
+                    data=csv_buffer.getvalue(),
+                    file_name=f"Circle_{selected_group}_Summary.csv",
+                    mime="text/csv",
+                    use_container_width=False
+                )
+            with c2:
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+                    pivot.to_excel(writer, index=True, sheet_name="Sheet1")
+                
+                
+                st.download_button(
+                    label="⬇️ Download Excel",
+                    data=excel_buffer.getvalue(),
+                    file_name=f"Circle_{selected_group}_Summary.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=False
+                )
+
 
 
     # ======================================
     # 4️⃣ OVERALL TIME-SERIES
     # ======================================
     with sub4:
-    
+        
+        # =====================================================
         # KPI group buttons
+        # =====================================================
         kpi_groups = list(KPI_GROUPS_NO_MONEY.keys())
         group_cols = st.columns(len(kpi_groups) + 1)
         selected_group = st.session_state.get("ts_overall_kpi_group", "All")
@@ -1498,26 +1654,154 @@ with tab6:
                 selected_group = grp
                 st.session_state.ts_overall_kpi_group = grp
 
+        # =====================================================
+        # 📅 Date Range Selector
+        # =====================================================
+        min_date = pd.to_datetime(df[date_col], errors="coerce").min().date()
+        max_date = pd.to_datetime(df[date_col], errors="coerce").max().date()
+
+        st.markdown("### 📅 Select Date Range")
+        start_date, end_date = st.date_input(
+            "Select Start and End Date",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date
+        )
+
+        # Filter dataframe by date range
+        mask = (df[date_col] >= pd.to_datetime(start_date)) & (df[date_col] <= pd.to_datetime(end_date))
+        df_filtered = df.loc[mask].copy()
+
+        # =====================================================
+        # Handle "All" KPI Groups
+        # =====================================================
         if selected_group == "All":
-            all_kpis = []
-            for cols in KPI_GROUPS_NO_MONEY.values():
-                all_kpis.extend([c + "_num" for c in cols if c + "_num" in df.columns])
-            df["Total"] = df[all_kpis].sum(axis=1)
-            overall_df = df.groupby(date_col)["Total"].sum().reset_index()
-            fig = px.line(overall_df, x=date_col, y="Total", markers=True, title="Overall Performance Over Time")
-        
-            display_table_with_download(overall_df, "Overall Performance Over Time", "Overall Performance Over Time")
-        
+            # Build per-group totals
+            group_totals = {}
+            for grp, cols in KPI_GROUPS_NO_MONEY.items():
+                grp_cols = [c + "_num" for c in cols if c + "_num" in df_filtered.columns]
+                if grp_cols:
+                    group_totals[grp] = df_filtered[grp_cols].sum(axis=1)
+
+            # Create DataFrame from per-group sums
+            group_df = pd.DataFrame(group_totals)
+            group_df[date_col] = df_filtered[date_col]
+            group_df = group_df.groupby(date_col).sum().reset_index()
+
+            # Add overall total
+            group_df["Total"] = group_df.drop(columns=[date_col]).sum(axis=1)
+
+            # --- 📈 Plot first (All Groups + Total) ---
+            melted = group_df.melt(id_vars=date_col, var_name="KPI Group", value_name="Value")
+            fig = px.line(
+                melted,
+                x=date_col,
+                y="Value",
+                color="KPI Group",
+                markers=True,
+                title=f"Overall KPI Group Trends ({start_date} → {end_date})"
+            )
+            fig.update_traces(line=dict(width=2))
+            fig.update_layout(height=500)
+            st.plotly_chart(fig, use_container_width=True)
+
+            # --- 📊 Display table below chart ---
+            st.markdown("### 📊 Overall KPI Group Summary Over Time")
+
+            # Add total row
+            total_row = group_df.select_dtypes(include=["number"]).sum(numeric_only=True)
+            total_row[date_col] = "TOTAL"
+            group_df = pd.concat([group_df, pd.DataFrame(total_row).T])
+
+            # Format numbers
+            pivot = group_df.copy()
+            for col in pivot.select_dtypes(include=["number"]).columns:
+                pivot[col] = pivot[col].apply(
+                    lambda x: f"{x:,.0f}" if pd.notna(x) and np.isfinite(x) else x
+                )
+
+            st.dataframe(pivot, use_container_width=True, hide_index=True)
+
+            # --- 💾 Excel download ---
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                group_df.to_excel(writer, index=False, sheet_name="Overall_KPI_Groups")
+            excel_data = output.getvalue()
+
+            st.download_button(
+                label="📥 Download Excel",
+                data=excel_data,
+                file_name=f"Overall_KPI_Groups_{start_date}_to_{end_date}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+
+        # =====================================================
+        # Handle Specific KPI Group
+        # =====================================================
         else:
-            selected_kpis = [c + "_num" for c in KPI_GROUPS_NO_MONEY[selected_group] if c + "_num" in df.columns]
-            df["Group_Total"] = df[selected_kpis].sum(axis=1)
-            group_df = df.groupby(date_col)[["Group_Total"] + selected_kpis].sum().reset_index()
-            fig = px.line(group_df, x=date_col, y="Group_Total", markers=True, title=f"{selected_group} — Cumulative Over Time")
+            selected_kpis = [
+                c + "_num"
+                for c in KPI_GROUPS_NO_MONEY[selected_group]
+                if c + "_num" in df_filtered.columns
+            ]
 
-            display_table_with_download(group_df, f"{selected_group} — Cumulative Over Time", f"{selected_group} — Cumulative Over Time")
+            # Calculate group total + each KPI per date
+            df_filtered["Group_Total"] = df_filtered[selected_kpis].sum(axis=1)
+            group_df = df_filtered.groupby(date_col)[["Group_Total"] + selected_kpis].sum().reset_index()
 
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
+            # --- 📈 Plot first (Group Total + KPIs) ---
+            plot_df = group_df.melt(
+                id_vars=[date_col],
+                var_name="Metric",
+                value_name="Value"
+            )
+            plot_df["Metric"] = plot_df["Metric"].str.replace("_num", "")
+            plot_df["Metric"] = plot_df["Metric"].replace("Group_Total", "Total")
+
+            fig = px.line(
+                plot_df,
+                x=date_col,
+                y="Value",
+                color="Metric",
+                markers=True,
+                title=f"{selected_group} — KPI-wise Cumulative ({start_date} → {end_date})"
+            )
+            fig.update_traces(line=dict(width=2))
+            fig.update_layout(height=500)
+            st.plotly_chart(fig, use_container_width=True)
+
+            # --- 📊 Display table below chart ---
+            st.markdown(f"### 📊 {selected_group} — KPI-wise Cumulative Summary")
+
+            # Add total row
+            total_row = group_df.select_dtypes(include=["number"]).sum(numeric_only=True)
+            total_row[date_col] = "TOTAL"
+            group_df = pd.concat([group_df, pd.DataFrame(total_row).T])
+
+            # Clean + format
+            pivot = group_df.copy()
+            pivot.columns = [str(col).replace("_num", "") for col in pivot.columns]
+            for col in pivot.select_dtypes(include=["number"]).columns:
+                pivot[col] = pivot[col].apply(
+                    lambda x: f"{x:,.0f}" if pd.notna(x) and np.isfinite(x) else x
+                )
+
+            st.dataframe(pivot, use_container_width=True, hide_index=True)
+
+            # --- 💾 Excel download ---
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                group_df.to_excel(writer, index=False, sheet_name=f"{selected_group}_KPI_Trends")
+            excel_data = output.getvalue()
+
+            st.download_button(
+                label="📥 Download Excel",
+                data=excel_data,
+                file_name=f"{selected_group}_KPI_Trends_{start_date}_to_{end_date}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
 
 
 
