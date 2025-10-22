@@ -471,10 +471,43 @@ with tab1:
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     today = pd.Timestamp.now().normalize()
     yesterday = today - pd.Timedelta(days=1)
-    st.write(f"📅 Showing records from **{yesterday.strftime('%d %b %Y ')}**")
+    #st.write(f"📅 Showing records from **{yesterday.strftime('%d %b %Y ')}**")
+    
     # Filter yesterday’s data
     yesterday_data = df[df['date'] == yesterday]
 
+    #calculate summary overview
+    ps_col = 'Thana'
+    submitted_ps = sorted(yesterday_data[ps_col].dropna().unique())
+    all_ps = sorted(df[ps_col].dropna().unique())
+    not_submitted_ps = [ps for ps in all_ps if ps not in submitted_ps]
+
+    #diplay overview summary
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        #st.markdown(f"Total PS NOT Submitted Yesterday: ")
+        #st.markdown(f"# :red[{yesterday.strftime('%d %b %Y ')}]")
+        st.markdown(f"""
+        📅 Showing records for <br>
+        <p style='text-align: left; color: blue; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{yesterday.strftime('%d %b %Y ')}</p> 
+        """,
+        unsafe_allow_html=True)
+        
+    
+    with col2:
+        st.markdown(f"""
+        Total PS Submitted Yesterday: <br>
+        <p style='text-align: left; color: green; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{len(submitted_ps)}</p>
+        """,
+        unsafe_allow_html=True)
+    #col3.metric(f"Total Issues Reported: ", len(df_no))
+    with col3:
+        st.markdown(f"""
+        Total PS NOT Submitted Yesterday: <br>
+        <p style='text-align: left; color: red; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{len(not_submitted_ps)}</p>
+        """,
+        unsafe_allow_html=True)
+    
     # List of all 23 Police Stations
     ps_list = sorted(df['Thana'].dropna().unique())
 
