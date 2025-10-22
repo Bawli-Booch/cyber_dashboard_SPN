@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import io
 import requests, re, urllib.parse, datetime
 from io import BytesIO
 import uuid
