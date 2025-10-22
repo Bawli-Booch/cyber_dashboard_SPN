@@ -1165,11 +1165,68 @@ with tab4:
 # --- EXPORT & PIVOT ---
 with tab5:
     keep_tab(4)
-    st.markdown("<h2 style='color:#0b67b2;'>Export & Pivot</h2>", unsafe_allow_html=True)
-    pivot = df.pivot_table(index="date", columns=STATION_COL if STATION_COL in df.columns else None,
-                           values=[k + "_num" for k in selected_kpis], aggfunc="sum", fill_value=0)
-    st.dataframe(pivot, use_container_width=True)
-    st.download_button("Download Pivot CSV. ", pivot.to_csv().encode("utf-8"), "cybercell_pivot.csv", "text/csv")
+    # ======================================
+    # 📊 Thana-wise KPI Summary Pivot Table
+    # ======================================
+    df_raw["date"] = pd.to_datetime(df_raw["date"], errors="coerce")
+    df = df_raw.copy()
+
+    # Detect columns
+    thana_col = STATION_COL
+    circle_col = CIRCLE_COL
+
+    # Ensure numeric conversions
+    for group, cols in KPI_GROUPS_NO_MONEY.items():
+        for c in cols:
+            if c in df.columns:
+                df[c + "_num"] = pd.to_numeric(df[c], errors="coerce").fillna(0)
+
+    if thana_col not in df.columns:
+        st.warning("No Thana column found.")
+    else:
+        # KPI Group buttons
+        kpi_groups = list(KPI_GROUPS_NO_MONEY.keys())
+        group_cols = st.columns(len(kpi_groups) + 1)
+        selected_group = st.session_state.get("ts_allthana_kpi_group", "All")
+
+        if group_cols[0].button("All", key="ts_allthana_all_a"):
+            selected_group = "All"
+            st.session_state.ts_allthana_kpi_group = "All"
+
+        for i, grp in enumerate(kpi_groups):
+            if group_cols[i + 1].button(grp, key=f"ts_allthana_{grp}_a"):
+                selected_group = grp
+                st.session_state.ts_allthana_kpi_group = grp
+
+        # ======================================
+        # 🧮 Build Pivot Logic
+        # ======================================
+        if selected_group == "All":
+            # Group by Thana and sum across each KPI group
+            group_sums = {}
+            for grp, cols in KPI_GROUPS_NO_MONEY.items():
+                grp_cols = [c + "_num" for c in cols if c + "_num" in df.columns]
+                if grp_cols:
+                    group_sums[grp] = df.groupby(thana_col)[grp_cols].sum().sum(axis=1)
+            pivot = pd.DataFrame(group_sums)
+        else:
+            # Group by Thana and sum each KPI within the selected group
+            kpis = [c + "_num" for c in KPI_GROUPS_NO_MONEY[selected_group] if c + "_num" in df.columns]
+            pivot = df.groupby(thana_col)[kpis].sum()
+
+        # ======================================
+        # ➕ Add Sum Columns & Rows
+        # ======================================
+        pivot["Sum"] = pivot.sum(axis=1)
+        total_row = pivot.sum(numeric_only=True)
+        total_row.name = "TOTAL"
+        pivot = pd.concat([pivot, pd.DataFrame(total_row).T])
+
+        # ======================================
+        # 📋 Display Final Table
+        # ======================================
+        st.markdown(f"### 📊 Thana-wise Summary – {selected_group}")
+        st.dataframe(pivot.style.format("{:,.0f}"), use_container_width=True)
 
     
 
