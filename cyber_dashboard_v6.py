@@ -473,20 +473,17 @@ with tab1:
     yesterday = today - pd.Timedelta(days=1)
     #st.write(f"📅 Showing records from **{yesterday.strftime('%d %b %Y ')}**")
 
-    from datetime import datetime
-    from zoneinfo import ZoneInfo  # available in Python 3.9+
-    
-    # Convert 'date' column to timezone-aware IST datetimes
-    df['date'] = df['date'].dt.tz_localize(None)
-
-    # Now get today's and yesterday's dates in IST
-    today_ist = pd.Timestamp.now(tz='Asia/Kolkata').normalize()
+    # Compute today's and yesterday's dates in IST
+    now_ist = pd.Timestamp.now(ZoneInfo("Asia/Kolkata"))
+    today_ist = now_ist.normalize()
     yesterday_ist = today_ist - pd.Timedelta(days=1)
-
     
-    # Filter yesterday’s data
-    yesterday_data = df[df['date'] == yesterday_ist]
-
+    # ✅ Create a temporary date-only Series (without modifying df)
+    date_only = df['date'].dt.date
+    
+    # ✅ Filter rows matching yesterday’s IST date
+    yesterday_data = df[date_only == yesterday_ist.date()]
+    
     #calculate summary overview
     ps_col = 'Thana'
     submitted_ps = sorted(yesterday_data[ps_col].dropna().unique())
@@ -500,7 +497,7 @@ with tab1:
         #st.markdown(f"# :red[{yesterday.strftime('%d %b %Y ')}]")
         st.markdown(f"""
         📅 Showing records for <br>
-        <p style='text-align: left; color: blue; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{yesterday_ist.strftime('%d %b %Y ')}</p> 
+        <p style='text-align: left; color: blue; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{yesterday_ist.date()}</p> 
         """,
         unsafe_allow_html=True)
         
