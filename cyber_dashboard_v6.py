@@ -1227,7 +1227,36 @@ with tab5:
         # ======================================
         st.markdown(f"### 📊 Thana-wise Summary – {selected_group}")
         st.dataframe(pivot.style.format("{:,.0f}"), use_container_width=True)
+        # --- Add manual download buttons ---
+        st.markdown("---")
+        c1, c2, c3 = st.columns([0.5, 1, 1])
+            
+        with c3:
+            csv_buffer = io.StringIO()
+            pivot.to_csv(csv_buffer, index=True)
+                
+            st.download_button(
+                label="⬇️ Download CSV",
+                data=csv_buffer.getvalue(),
+                file_name=f"Thana_{selected_group}_Summary.csv",
+                mime="text/csv",
+                use_container_width=False
+            )
+        with c2:
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+                pivot.to_excel(writer, index=True, sheet_name="Sheet1")
+            
+            
+            st.download_button(
+                label="⬇️ Download Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"Thana_{selected_group}_Summary.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=False
+            )
 
+        
     
 
 #time series analytics
