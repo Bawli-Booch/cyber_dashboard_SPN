@@ -472,9 +472,20 @@ with tab1:
     today = pd.Timestamp.now().normalize()
     yesterday = today - pd.Timedelta(days=1)
     #st.write(f"📅 Showing records from **{yesterday.strftime('%d %b %Y ')}**")
+
+    from datetime import datetime
+    from zoneinfo import ZoneInfo  # available in Python 3.9+
+    
+    # Convert 'date' column to timezone-aware IST datetimes
+    df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata')
+    
+    # Now get today's and yesterday's dates in IST
+    today_ist = pd.Timestamp.now(tz='Asia/Kolkata').normalize()
+    yesterday_ist = today_ist - pd.Timedelta(days=1)
+
     
     # Filter yesterday’s data
-    yesterday_data = df[df['date'] == yesterday]
+    yesterday_data = df[df['date'] == yesterday_ist]
 
     #calculate summary overview
     ps_col = 'Thana'
@@ -489,7 +500,7 @@ with tab1:
         #st.markdown(f"# :red[{yesterday.strftime('%d %b %Y ')}]")
         st.markdown(f"""
         📅 Showing records for <br>
-        <p style='text-align: left; color: blue; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{yesterday.strftime('%d %b %Y ')}</p> 
+        <p style='text-align: left; color: blue; margin-top: -1rem; margin-bottom: 0.5rem;font-size: 2.5rem; font-weight: bold;'>{yesterday_ist.strftime('%d %b %Y ')}</p> 
         """,
         unsafe_allow_html=True)
         
@@ -594,9 +605,7 @@ with tab1:
                 mime="text/csv",
             )
 
-        st.markdown("---")
-        st.metric("Total PS Submitted Yesterday", f"{len(submitted_ps)} / {len(ps_list)}")
-
+        
     # ============================================================
     # 📊 Thana-wise KPI Chart (Stacked)
     # ============================================================
