@@ -477,8 +477,8 @@ with tab1:
     from zoneinfo import ZoneInfo  # available in Python 3.9+
     
     # Convert 'date' column to timezone-aware IST datetimes
-    df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata')
-    
+    df['date'] = df['date'].dt.tz_localize(None)
+
     # Now get today's and yesterday's dates in IST
     today_ist = pd.Timestamp.now(tz='Asia/Kolkata').normalize()
     yesterday_ist = today_ist - pd.Timedelta(days=1)
