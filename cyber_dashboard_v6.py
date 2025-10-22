@@ -443,7 +443,7 @@ button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
 
 #tabs inside main section for selected KPI
 # --- TAB INITIALIZATION AND TAB MEMORY MANAGEMENT ---
-tabs = ["Overview", "Circle Insights", "Thana Insights", "Leaderboards", "Export & Pivot", "Time series Analytics", "money tab"]
+tabs = ["Overview", "Circle Insights", "Thana Insights", "Leaderboards", "Export & Pivot", "Time series Analytics", "💰 Money Matters"]
 
 # Initialize session variable to remember active tab
 if "active_tab" not in st.session_state:
@@ -1955,7 +1955,7 @@ with tab7:  # or use st.tab("💰 Money") if you use st.tabs() pattern
 # -----------------------------------------------
 # 📊 GOOGLE SHEET DATA DOWNLOAD SECTION
 # -----------------------------------------------
-import io
+
 st.markdown("---")
 st.markdown("##### 📁 Download Full Google Sheet Data")
 
@@ -1992,4 +1992,4 @@ st.markdown("---")
 # Footer
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 st.markdown("<div class='footer'>© Cyber Cell Shahjahanpur · Data Intelligence Dashboard</div>", unsafe_allow_html=True)
-st.markdown("---")
+
