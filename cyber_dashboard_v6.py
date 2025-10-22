@@ -1316,7 +1316,9 @@ with tab6:
         if thana_col not in df.columns:
             st.warning("No Thana column found.")
         else:
-            # KPI group buttons
+            # =====================================================
+            # KPI group selector buttons
+            # =====================================================
             kpi_groups = list(KPI_GROUPS_NO_MONEY.keys())
             group_cols = st.columns(len(kpi_groups) + 1)
             selected_group = st.session_state.get("ts_allthana_kpi_group", "All")
@@ -1330,27 +1332,76 @@ with tab6:
                     selected_group = grp
                     st.session_state.ts_allthana_kpi_group = grp
 
-            # Aggregate data
+            # =====================================================
+            # Convert all KPI columns to numeric (_num)
+            # =====================================================
+            for group, cols in KPI_GROUPS_NO_MONEY.items():
+                for c in cols:
+                    if c in df.columns:
+                        df[c + "_num"] = pd.to_numeric(df[c], errors="coerce").fillna(0)
+
+            # =====================================================
+            # Trend chart data (common)
+            # =====================================================
             agg_dict = {}
-            if selected_group == "All":
-                for cols in KPI_GROUPS_NO_MONEY.values():
-                    for c in cols:
-                        if c + "_num" in df.columns:
-                            agg_dict[c + "_num"] = "sum"
-            else:
-                for c in KPI_GROUPS_NO_MONEY[selected_group]:
-                    if c + "_num" in df.columns:
-                        agg_dict[c + "_num"] = "sum"
+            for cols in (
+                sum(KPI_GROUPS_NO_MONEY.values(), [])
+                if selected_group == "All"
+                else KPI_GROUPS_NO_MONEY[selected_group]
+            ):
+                col = f"{cols}_num" if f"{cols}_num" in df.columns else cols
+                if col in df.columns:
+                    agg_dict[col] = "sum"
 
             df_sum = df.groupby([date_col, thana_col]).agg(agg_dict).reset_index()
             df_sum["Total"] = df_sum.drop(columns=[date_col, thana_col]).sum(axis=1)
 
-            fig = px.line(df_sum, x=date_col, y="Total", color=thana_col,
-                          markers=True, title=f"All Thanas — {selected_group} Trend Over Time")
+            fig = px.line(
+                df_sum,
+                x=date_col,
+                y="Total",
+                color=thana_col,
+                markers=True,
+                title=f"All Thanas — {selected_group} Trend Over Time"
+            )
             fig.update_layout(height=500)
             st.plotly_chart(fig, use_container_width=True)
 
-            display_table_with_download(df_sum, "overall_thana_wise_time_series", "Daily overall-wise Data")
+            # =====================================================
+            # SEPARATE CALLS FOR "All" vs "Selected"
+            # =====================================================
+            if selected_group == "All":
+                st.subheader("📊 All KPI Groups Summary in available in pivot tab")
+
+            else:
+                # ✅ Specific KPI group
+                kpi_cols = [
+                    c + "_num" for c in KPI_GROUPS_NO_MONEY[selected_group]
+                    if c + "_num" in df.columns
+                ]
+                pivot = df.groupby(thana_col)[kpi_cols].sum()
+
+                pivot["Sum"] = pivot.sum(axis=1)
+                total_row = pivot.sum(numeric_only=True)
+                total_row.name = "TOTAL"
+                pivot = pd.concat([pivot, pd.DataFrame(total_row).T])
+                pivot = pivot.reset_index(names=[thana_col])
+
+                pivot.columns = [
+                    str(col).replace("_num", "") if isinstance(col, (str, bytes)) else str(col)
+                    for col in pivot.columns
+                ]
+
+                if thana_col in pivot.columns:
+                    pivot = pivot[[thana_col] + [c for c in pivot.columns if c != thana_col]]
+
+                # 🧾 Display & download
+                display_table_with_download(
+                    dataframe=pivot,
+                    filename=f"Thana_{selected_group}_KPIs",
+                    title=f"📊 Thana-wise Summary – {selected_group}",
+                    height=450
+                )
 
 
     # ======================================
