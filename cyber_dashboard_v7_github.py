@@ -180,7 +180,14 @@ def display_table_with_download(
     """
     Displays only Thana, Circle, Created_At + all KPI_GROUPS columns.
     Automatically handles nested KPI_GROUPS dicts.
+    Adds total row and total column (excluding date/time columns).
     """
+    import uuid
+    import pandas as pd
+    import streamlit as st
+    from io import BytesIO
+    from bs4 import BeautifulSoup
+
     st.markdown("---")
 
     global KPI_GROUPS
@@ -193,7 +200,7 @@ def display_table_with_download(
         st.info("No data available to display.")
         return
 
-    # --- Flatten KPI columns from nested dictionary ---
+    # --- Flatten KPI columns ---
     all_kpis = []
     if isinstance(kpi_groups, dict):
         for group, kpis in kpi_groups.items():
@@ -201,7 +208,7 @@ def display_table_with_download(
     elif isinstance(kpi_groups, (list, set)):
         all_kpis = list(kpi_groups)
 
-    # --- Identify structural columns ---
+    # --- Identify key columns ---
     show_cols = []
     for col in ["Thana", "Circle", "Created_At", "created_at"]:
         if col in dataframe.columns:
@@ -212,169 +219,127 @@ def display_table_with_download(
         if kpi in dataframe.columns:
             show_cols.append(kpi)
 
-    # Remove duplicates and invalids
     show_cols = [c for i, c in enumerate(show_cols) if c not in show_cols[:i] and c in dataframe.columns]
 
-    # ---- handle long-form (melted) data safely ----
     if not show_cols:
-        # If dataframe has typical melted structure like ["Circle", "KPI", "Value"], just show all columns
-        expected_long = {"kpi", "value"} <= set(map(str.lower, dataframe.columns))
-        if expected_long:
-            show_cols = list(dataframe.columns)
-        else:
-            st.warning("⚠️ No matching KPI columns found in this dataset.")
-            return
+        st.warning("⚠️ No matching KPI columns found.")
+        return
 
-    
     df_filtered = dataframe[show_cols].copy()
 
-    # Convert numeric columns to int (no decimals)
+    # --- Convert floats to ints for display consistency ---
     for col in df_filtered.select_dtypes(include=['float', 'int']).columns:
-        # Only convert if all values are finite
         if df_filtered[col].notna().all():
             df_filtered[col] = df_filtered[col].astype(int)
 
-    # --- 🧾 Display formatted & center-aligned table ---
+    # ==========================================================
+    # ✅ ADD TOTAL ROW AND TOTAL COLUMN (skip date/time cols)
+    # ==========================================================
+    skip_cols = ["created_at", "Created_At", "date", "Date", "time", "Time", "Thana", "Circle", "Created_At", "created_at"]
+    numeric_cols = [col for col in df_filtered.columns if col not in skip_cols and pd.api.types.is_numeric_dtype(df_filtered[col])]
 
+    # Add "Total" row at bottom
+    total_row = {col: df_filtered[col].sum() if col in numeric_cols else "Total" for col in df_filtered.columns}
+    df_filtered.loc[len(df_filtered)] = total_row
 
+    # Add "Total" column at end (sum of numeric columns in each row)
+    df_filtered["Total"] = df_filtered[numeric_cols].sum(axis=1)
 
-
-    # --- 🧾 Display formatted, center-aligned, and sortable HTML table ---
+    # ==========================================================
+    # ✅ Render Styled Sortable Table
+    # ==========================================================
     try:
-        # Copy and format numbers for display (strings with commas)
         df_display = df_filtered.copy()
         for col in df_display.select_dtypes(include=['float', 'int']).columns:
             df_display[col] = df_display[col].apply(lambda x: f"{int(x):,}")
 
-        # Create a unique table id
-        
         table_id = f"table_{uuid.uuid4().hex[:8]}"
-
-        # Convert dataframe to HTML (no index)
         html_table = df_display.to_html(index=False, border=0, justify='center')
-
-        # Inject the id attribute into the first <table ...> occurrence
-        # safe replace: insert id right after '<table'
         html_table = html_table.replace("<table", f'<table id="{table_id}"', 1)
 
+        sort_js = f"""
+        <script>
+        function sortTable_{table_id}(tableId, colIndex) {{
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const isAsc = table.getAttribute("data-sort-dir") !== "asc";
+            rows.sort((a, b) => {{
+                const A = a.children[colIndex].innerText.trim();
+                const B = b.children[colIndex].innerText.trim();
+                const numA = parseFloat(A.replace(/,/g, ''));
+                const numB = parseFloat(B.replace(/,/g, ''));
+                if (!isNaN(numA) && !isNaN(numB)) return isAsc ? numA - numB : numB - numA;
+                return isAsc ? A.localeCompare(B) : B.localeCompare(A);
+            }});
+            rows.forEach(r => tbody.appendChild(r));
+            table.setAttribute("data-sort-dir", isAsc ? "asc" : "desc");
+        }}
+        </script>
+        """
 
-        
-        # Render the final HTML table
-        # --- Render HTML safely inside a scrollable, sortable, fully styled container ---
-        try:
-            scroll_height = height  # default 400
+        soup = BeautifulSoup(html_table, "html.parser")
+        header = soup.find("thead")
+        if header:
+            for idx, th in enumerate(header.find_all("th")):
+                th["onclick"] = f"sortTable_{table_id}('{table_id}', {idx})"
+                th["style"] = "cursor:pointer; user-select:none;"
+        html_table_sorted = str(soup)
 
-            # ✅ Safe inline JavaScript sorter
-            sort_js = f"""
-            <script>
-            function sortTable_{table_id}(tableId, colIndex) {{
-                const table = document.getElementById(tableId);
-                const tbody = table.querySelector("tbody");
-                const rows = Array.from(tbody.querySelectorAll("tr"));
-                const isAsc = table.getAttribute("data-sort-dir") !== "asc";
-                rows.sort((a, b) => {{
-                    const A = a.children[colIndex].innerText.trim();
-                    const B = b.children[colIndex].innerText.trim();
-                    const numA = parseFloat(A.replace(/,/g, ''));
-                    const numB = parseFloat(B.replace(/,/g, ''));
-                    if (!isNaN(numA) && !isNaN(numB)) return isAsc ? numA - numB : numB - numA;
-                    return isAsc ? A.localeCompare(B) : B.localeCompare(A);
-                }});
-                rows.forEach(r => tbody.appendChild(r));
-                table.setAttribute("data-sort-dir", isAsc ? "asc" : "desc");
-            }}
-            </script>
-            """
+        css_styles = f"""
+        <style>
+        table#{table_id} {{
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.9rem;
+            border: 4px solid #d0d0d0;
+        }}
+        table#{table_id} th {{
+            background-color: #0b67b2;
+            color: white;
+            font-weight: 600;
+            padding: 8px;
+        }}
+        table#{table_id} td {{
+            padding: 6px;
+            border: 1px solid #e1e1e1;
+            text-align: center;
+        }}
+        table#{table_id} tr:nth-child(even) {{
+            background-color: #f6fdf8;
+        }}
+        table#{table_id} tr:hover {{
+            background-color: #e4f5eb;
+        }}
+        </style>
+        """
 
-            # ✅ Make headers clickable
-            soup = BeautifulSoup(html_table, "html.parser")
-            header = soup.find("thead")
-            if header:
-                for idx, th in enumerate(header.find_all("th")):
-                    th["onclick"] = f"sortTable_{table_id}('{table_id}', {idx})"
-                    th["style"] = "cursor:pointer; user-select:none;"
-            html_table_sorted = str(soup)
+        html_block = f"""
+        {css_styles}
+        {sort_js}
+        <div style="max-height:{height}px;overflow-y:auto;border:1px solid #ccc;border-radius:8px;padding:4px;background-color:white;">
+            {html_table_sorted}
+        </div>
+        """
+        st.components.v1.html(html_block, height=height + 25, scrolling=True)
 
-            # ✅ Custom colour palette + styling INSIDE iframe
-            css_styles = f"""
-            <style>
-            table#{table_id} {{
-                width: 100%;
-                border-collapse: collapse;
-                text-align: center;
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 0.9rem;
-                border: 5px solid #d0d0d0;
-            }}
-            table#{table_id} th {{
-                background-color: #0b67b2;       /* Deep green header */
-                color: white;
-                font-weight: 600;
-                padding: 8px;
-                text-transform: capitalize;
-            }}
-            table#{table_id} td {{
-                padding: 6px;
-                border: 1px solid #e1e1e1;
-                text-align: center;
-                color: #333;
-            }}
-            table#{table_id} tr:nth-child(even) {{
-                background-color: #f6fdf8;       /* very light green tint */
-            }}
-            table#{table_id} tr:nth-child(odd) {{
-                background-color: #ffffff;
-            }}
-            table#{table_id} tr:hover {{
-                background-color: #e4f5eb;       /* soft hover highlight */
-            }}
-            th:hover {{
-                background-color: #3fa76d;
-            }}
-            </style>
-            """
-
-            # ✅ Combine everything
-            html_block = f"""
-            {css_styles}
-            {sort_js}
-            <div style="
-                max-height:{scroll_height}px;
-                overflow-y:auto;
-                border:1px solid #ccc;
-                border-radius:8px;
-                padding:4px;
-                background-color:white;">
-                {html_table_sorted}
-            </div>
-            """
-
-            # ✅ Render inside isolated iframe
-            st.components.v1.html(html_block, height=scroll_height + 15, scrolling=True)
-
-        except Exception as e:
-            st.warning(f"⚠️ HTML render failed ({e}) — displaying fallback table.")
-            st.dataframe(df_display, use_container_width=True, height=height)
-
-    except Exception:
-        st.markdown("html table not working")
-        # Fallback to Streamlit dataframe if something goes wrong
+    except Exception as e:
+        st.warning(f"⚠️ HTML table rendering failed ({e}).")
         st.dataframe(df_filtered, use_container_width=True, height=height)
 
-
-    # --- Excel export ---
+    # ==========================================================
+    # ✅ Excel download
+    # ==========================================================
     st.markdown("---")
-
     towrite = BytesIO()
     df_filtered.to_excel(towrite, index=False, sheet_name='Data')
     towrite.seek(0)
     record_count = len(df_filtered)
 
-    # --- Center-aligned download button ---
-    # Create 3 equal columns and place the button in the center one
     c1, c2, c3 = st.columns([1, 1, 1])
     with c2:
-        # The actual button
         st.download_button(
             label=f"⬇️ Download {record_count:,} records as Excel",
             data=towrite,
@@ -382,7 +347,6 @@ def display_table_with_download(
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key=f"download_{filename}_{uuid.uuid4().hex[:6]}"
         )
-
 # -----------------------------------------------
 # DATA FETCH FUNCTION
 # -----------------------------------------------
@@ -650,18 +614,6 @@ with tab1:
         ).round(1)
 
         
-        # 3️⃣ Add TOTAL row
-        total_row = pd.DataFrame({
-            STATION_COL: ["TOTAL"],
-            "Total Submissions": [thana_counts["Total Submissions"].sum()],
-            "% Share": [100.0],
-        })
-        
-        
-        
-        
-        thana_counts = pd.concat([thana_counts, total_row], ignore_index=True)
-
         # 4️⃣ Calculate date range duration
         if "date" in df.columns:
             min_date = df["date"].min()
